@@ -1,6 +1,15 @@
 package com.example.lulysses.ffx;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -20,13 +29,14 @@ public class CustomWatchFaceService extends CanvasWatchFaceService {
     @Override
     public Engine onCreateEngine()
     {
-        return new SimpleEngine();
+        return new Engine();
     }
 
-    private class SimpleEngine extends Engine
+    private class Engine extends CanvasWatchFaceService.Engine
     {
-
         static final int MSG_UPDATE_TIME = 0;
+        static final int INTERACTIVE_UPDATE_RATE_MS = 500;
+
         /* a time object */
         Time mTime;
 
@@ -34,7 +44,23 @@ public class CustomWatchFaceService extends CanvasWatchFaceService {
         boolean mLowBitAmbient;
 
         /* graphic objects */
-        Bitmap mBackgroundArray[];
+        Bitmap mBackgroundBitmap[];
+        Bitmap mScaledBackgroundBitmap[];
+
+
+        @Override
+        public void onCreate(SurfaceHolder holder)
+        {
+            super.onCreate(holder);
+
+            /* load the background image */
+            Resources resources = CustomWatchFaceService.this.getResources();
+            Drawable backgroundDrawable = resources.getDrawable(R.drawable.bg);
+            mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
+
+
+
+        }
 
 
         final Handler mUpdateTimeHandler  = new Handler()
@@ -58,44 +84,44 @@ public class CustomWatchFaceService extends CanvasWatchFaceService {
             }
         };
 
+        /* receiver to update the time zone */
+        final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mTime.clear(intent.getStringExtra("time-zone"));
+                mTime.setToNow();
+            }
+        };
 
         @Override
-        public void onCreate(SurfaceHolder holder)
-        {
-            super.onCreate(holder);
-
-
-        }
-
-        private void startTimerIfNecessary()
-        {
-
-        }
-
-
-
-        @Override
-        public void onVisibilityChanged(boolean visible)
-        {
-            super.onVisibilityChanged(visible);
-        }
-
-        @Override
-        public void onAmbientModeChanged(boolean inAmbientMode) {
-            super.onAmbientModeChanged(inAmbientMode);
+        public void onPropertiesChanged(Bundle properties) {
+            super.onPropertiesChanged(properties);
+            /* get device features (burn-in, low-bit ambient) */
         }
 
         @Override
         public void onTimeTick() {
             super.onTimeTick();
-            invalidate();
+            /* the time changed */
         }
-
 
         @Override
-        public void onDestroy() {
-            super.onDestroy();
+        public void onAmbientModeChanged(boolean inAmbientMode) {
+            super.onAmbientModeChanged(inAmbientMode);
+            /* the wearable switched between modes */
         }
+
+        @Override
+        public void onDraw(Canvas canvas, Rect bounds) {
+            /* draw your watch face */
+        }
+
+        @Override
+        public void onVisibilityChanged(boolean visible) {
+            super.onVisibilityChanged(visible);
+            /* the watch face became visible or invisible */
+        }
+
 
 
     }
